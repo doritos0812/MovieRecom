@@ -134,7 +134,7 @@ sorted_indices = combined_similarity.argsort()[:, ::-1]
 # 결과 확인
 print(sorted_indices)
 
-def get_recommend_movie_list(df, movie_title, top=30):
+def get_recommend_movie_list(df, movie_title, top=20):
     # 특정 영화와 비슷한 영화를 추천해야 하기 때문에 '특정 영화' 정보를 뽑아낸다.
     target_movie_index = df[df['title'] == movie_title].index.values
 
@@ -147,5 +147,44 @@ def get_recommend_movie_list(df, movie_title, top=30):
     result = df.iloc[sim_index].sort_values('weighted_score', ascending=False)[:20]
     return result
 
-get_recommend_movie_list(processed_data, movie_title='Deadpool')
+rec_movies = get_recommend_movie_list(processed_data, movie_title='Deadpool')
 
+rec = list(rec_movies['title'])[:20]
+rec
+
+import requests
+from urllib.request import urlopen
+from PIL import Image
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+def movie_poster(titles):
+    data_URL = 'http://www.omdbapi.com/?i=tt3896198&apikey=f9cdaffd'
+
+    fig, axes = plt.subplots(2, 10, figsize=(30,9))
+
+    for i, ax in enumerate(axes.flatten()):
+        w_title = titles[i].strip().split()
+        params = {
+            's':titles[i],
+            'type':'movie',
+            'y':''
+        }
+        response = requests.get(data_URL,params=params).json()
+
+        if response["Response"] == 'True':
+            poster_URL = response["Search"][0]["Poster"]
+            img = Image.open(urlopen(poster_URL))
+            ax.imshow(img)
+
+        ax.axis("off")
+        if len(w_title) >= 10:
+            ax.set_title(f"{i+1}. {' '.join(w_title[:5])}\n{' '.join(w_title[5:10])}\n{' '.join(w_title[10:])}", fontsize=10)
+        elif len(w_title) >= 5:
+            ax.set_title(f"{i+1}. {' '.join(w_title[:5])}\n{' '.join(w_title[5:])}", fontsize=10)
+        else:
+            ax.set_title(f"{i+1}. {titles[i]}", fontsize=10)
+
+    plt.show()
+
+movie_poster(rec)
